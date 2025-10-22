@@ -31,7 +31,7 @@ def get_date_list(start_date: str, end_date: str) -> List[str]:
 # 3. 核心MCP工具：统计日期范围工作日天数
 @mcp.tool(
     name="count_workdays",
-    description="根据开始日期和结束日期，统计该范围内的工作日总天数"
+    description="根据开始日期和结束日期，统计该日期范围内的工作日天数"
 )
 def count_workdays(start_date: Annotated[str, Field(description="开始日期，格式YYYY-MM-DD")], end_date: Annotated[str, Field(description="结束日期，格式YYYY-MM-DD")]) -> dict:
     try:
@@ -73,11 +73,10 @@ def count_workdays(start_date: Annotated[str, Field(description="开始日期，
         
         # 返回结果（包含统计数和明细）
         return {
-            "message": "查询成功",
+            "message": f"查询成功，日期范围内一共{workday_count}天工作日",
             "start_date": start_date,
             "end_date": end_date,
-            "workday_count": workday_count,
-            "date_details": date_details
+            "workday_count": workday_count
         }
     
     except requests.exceptions.RequestException as e:
