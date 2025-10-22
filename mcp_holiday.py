@@ -86,7 +86,7 @@ def count_workdays(start_date: Annotated[str, Field(description="开始日期，
 
 if __name__ == '__main__':
     mcp.run(
-        transport="sse",
+        transport="http",
         host="0.0.0.0", 
         port=18061      
     )
