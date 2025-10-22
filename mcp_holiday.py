@@ -57,7 +57,6 @@ def workday_list(start_date: Annotated[str, Field(description="开始日期，�
         
         type_data = api_data.get("type", {})
         workday_list = []
-        date_details = {}
         for date in date_list:
             date_info = type_data.get(date, {})
             date_type = date_info.get("type", -1)  # -1表示未获取到类型
