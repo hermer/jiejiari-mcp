@@ -6,11 +6,10 @@ from pydantic import Field
 
 # 1. 初始化FastMCP应用（指定HTTP SSE传输，适配客户端需求）
 mcp = FastMCP(
-    name="HolidayWorkdayCounter",
-    instructions="根据开始日期和结束日期，统计该范围内的工作日总天数",
+    name="MCP",
+    instructions="我的N8N工具集",
 )
 
-# 2. 工具函数：生成日期范围内的所有日期字符串（格式：YYYY-MM-DD）
 def get_date_list(start_date: str, end_date: str) -> List[str]:
     date_list = []
     try:
@@ -28,17 +27,16 @@ def get_date_list(start_date: str, end_date: str) -> List[str]:
         current += timedelta(days=1)
     return date_list
 
-# 3. 核心MCP工具：统计日期范围工作日天数
 @mcp.tool(
-    name="count_workdays",
-    description="根据开始日期和结束日期，统计该日期范围内的工作日天数"
+    name="workday_list",
+    description="根据开始日期和结束日期，查询该范围内的工作日列表"
 )
-def count_workdays(start_date: Annotated[str, Field(description="开始日期，格式YYYY-MM-DD")], end_date: Annotated[str, Field(description="结束日期，格式YYYY-MM-DD")]) -> dict:
+def workday_list(start_date: Annotated[str, Field(description="开始日期，格式YYYY-MM-DD")], end_date: Annotated[str, Field(description="结束日期，格式YYYY-MM-DD")]) -> dict:
     try:
         # 生成日期列表
         date_list = get_date_list(start_date, end_date)
         if not date_list:
-            return {"message": "无有效日期范围", "workday_count": 0}
+            return {"message": "无有效日期范围", "workday_list": []}
         
         # 构建批量查询接口参数（d=日期1&d=日期2...）
         params = {
@@ -55,36 +53,29 @@ def count_workdays(start_date: Annotated[str, Field(description="开始日期，
         
         # 处理接口返回，统计工作日（type=0）
         if api_data.get("code") != 0:
-            return {"message": f"接口返回错误：{api_data.get('message', '未知错误')}", "workday_count": 0}
+            return {"message": f"接口返回错误：{api_data.get('message', '未知错误')}", "workday_list": []}
         
         type_data = api_data.get("type", {})
-        workday_count = 0
+        workday_list = []
         date_details = {}
         for date in date_list:
             date_info = type_data.get(date, {})
             date_type = date_info.get("type", -1)  # -1表示未获取到类型
-            date_details[date] = {
-                "type": date_type,
-                "name": date_info.get("name", "未知"),
-                "is_workday": date_type == 0
-            }
             if date_type == 0:
-                workday_count += 1
+                workday_list.append(date)
         
         # 返回结果（包含统计数和明细）
         return {
-            "message": f"查询成功，日期范围内一共{workday_count}天工作日",
-            "start_date": start_date,
-            "end_date": end_date,
-            "workday_count": workday_count
+            "message": f"查询成功，一共{len(workday_list)}天工作日",
+            "workday_list": workday_list
         }
     
     except requests.exceptions.RequestException as e:
-        return {"message": f"接口调用失败：{str(e)}", "workday_count": 0}
+        return {"message": f"接口调用失败：{str(e)}", "workday_list": []}
     except ValueError as e:
-        return {"message": f"参数错误：{str(e)}", "workday_count": 0}
+        return {"message": f"参数错误：{str(e)}", "workday_list": []}
     except Exception as e:
-        return {"message": f"系统内部错误：{str(e)}", "workday_count": 0}
+        return {"message": f"系统内部错误：{str(e)}", "workday_list": []}
 
 if __name__ == '__main__':
     mcp.run(
