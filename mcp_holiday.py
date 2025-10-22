@@ -41,12 +41,15 @@ def count_workdays(start_date: Annotated[str, Field(description="开始日期，
             return {"message": "无有效日期范围", "workday_count": 0}
         
         # 构建批量查询接口参数（d=日期1&d=日期2...）
-        params = {"type": "Y"}
-        for date in date_list:
-            params[f"d"] = date  # 重复d参数，接口支持批量接收
-        
+        params = {
+            "d": date_list,
+            "type": "Y"
+        }
         # 调用节假日接口
-        response = requests.get("https://timor.tech/api/holiday/batch", params=params, timeout=10)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+        }
+        response = requests.get("https://timor.tech/api/holiday/batch", params=params, timeout=100, headers=headers)
         response.raise_for_status()  # 捕获HTTP请求错误（如404、500）
         api_data = response.json()
         
